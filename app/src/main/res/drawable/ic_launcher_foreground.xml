@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Acoustic shield circle outline -->
+    <path
+        android:strokeColor="#1E3A5F"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.6"
+        android:pathData="M 54, 26 A 28,28 0 1,0 54, 82 A 28,28 0 1,0 54, 26 Z" />
+    
+    <!-- Sound wave vertical bars representing noise masking -->
+    <!-- Bar 1 -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 33,48 L 37,48 A 2,2 0 0,1 39,50 L 39,58 A 2,2 0 0,1 37,60 L 33,60 A 2,2 0 0,1 31,58 L 31,50 A 2,2 0 0,1 33,48 Z" />
+    <!-- Bar 2 -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 41,40 L 45,40 A 2,2 0 0,1 47,42 L 47,66 A 2,2 0 0,1 45,68 L 41,68 A 2,2 0 0,1 39,66 L 39,42 A 2,2 0 0,1 41,40 Z" />
+    <!-- Bar 3 (Center) -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M 50,33 L 56,33 A 3,3 0 0,1 59,36 L 59,72 A 3,3 0 0,1 56,75 L 50,75 A 3,3 0 0,1 47,72 L 47,36 A 3,3 0 0,1 50,33 Z" />
+    <!-- Bar 4 -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 61,40 L 65,40 A 2,2 0 0,1 67,42 L 67,66 A 2,2 0 0,1 65,68 L 61,68 A 2,2 0 0,1 59,66 L 59,42 A 2,2 0 0,1 61,40 Z" />
+    <!-- Bar 5 -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 69,48 L 73,48 A 2,2 0 0,1 75,50 L 75,58 A 2,2 0 0,1 73,60 L 69,60 A 2,2 0 0,1 67,58 L 67,50 A 2,2 0 0,1 69,48 Z" />
+</vector>

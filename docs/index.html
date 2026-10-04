@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NoiseBlock — Acoustic Outside Noise Canceller</title>
+  <meta name="description" content="Lightweight, battery-efficient web app with brown noise, white noise, and acoustic profiles to cancel outside noise on phone, laptop, or desktop.">
+  <meta name="theme-color" content="#06090e">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #06090e;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 14px 40px;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 4px;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.16);
+      color: #10b981;
+      padding: 3px 7px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .subhead {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .apk-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .apk-btn:hover {
+      background: rgba(56, 189, 248, 0.24);
+    }
+    /* Hero Visualizer */
+    .hero-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0 8px;
+      position: relative;
+    }
+    .visualizer-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .active .pulse-ring-1 {
+      animation: pulse 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .active .pulse-ring-2 {
+      animation: pulse 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 1.3s;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.6); opacity: 0.8; }
+      100% { transform: scale(1.15); opacity: 0; }
+    }
+    .play-btn {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      transition: transform 0.15s, background 0.3s, border-color 0.3s;
+      outline: none;
+    }
+    .play-btn:active {
+      transform: scale(0.92);
+    }
+    .play-btn svg {
+      width: 44px;
+      height: 44px;
+      fill: currentColor;
+    }
+    .current-sound-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d97706;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .sound-status {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .speaker-pill {
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .speaker-pill:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    /* Card Container */
+    .card {
+      background: #0d121b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    /* Sliders */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #38bdf8;
+      cursor: pointer;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      outline: none;
+    }
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .toggle-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 80%;
+    }
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .toggle-desc {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 14px;
+    }
+    .switch-ui {
+      width: 44px;
+      height: 24px;
+      background: #0284c7;
+      border-radius: 12px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .switch-ui::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 23px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: left 0.2s;
+    }
+    .switch-off .switch-ui {
+      background: #334155;
+    }
+    .switch-off .switch-ui::after {
+      left: 3px;
+    }
+    /* Timer Chips */
+    .timer-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .chip {
+      flex: 1;
+      padding: 8px 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: center;
+      color: #94a3b8;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chip.active {
+      background: rgba(167, 139, 250, 0.2);
+      border-color: #a78bfa;
+      color: #a78bfa;
+      font-weight: 600;
+    }
+    /* Presets */
+    .presets-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .preset-item {
+      background: #131a26;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-item:hover {
+      background: #172132;
+    }
+    .preset-item.selected {
+      border-color: var(--accent);
+      background: rgba(var(--accent-rgb), 0.12);
+    }
+    .preset-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--accent);
+    }
+    .preset-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .preset-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preset-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .preset-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(var(--accent-rgb), 0.2);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .preset-target {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .preset-item.selected .preset-target {
+      color: #cbd5e1;
+    }
+    /* Footer */
+    footer {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 15px;
+    }
+    footer svg {
+      width: 28px;
+      height: 28px;
+      fill: #10b981;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand-title">
+          <span>NoiseBlock</span>
+          <span class="badge">LOW POWER</span>
+        </div>
+        <div class="subhead">Acoustic Outside Noise Canceller</div>
+      </div>
+      <a href="NoiseBlock.apk" download class="apk-btn" title="Download Android APK">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zM12 2L6.5 7.5l1.42 1.42L11 5.83V16h2V5.83l3.08 3.09 1.42-1.42L12 2z" transform="rotate(180 12 12)"/></svg>
+        <span>Get APK</span>
+      </a>
+    </header>
+
+    <div class="hero-box">
+      <div class="visualizer-wrapper" id="visualizer">
+        <div class="pulse-ring pulse-ring-1" id="ring1"></div>
+        <div class="pulse-ring pulse-ring-2" id="ring2"></div>
+        <button class="play-btn" id="playBtn" aria-label="Play or Pause Noise">
+          <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+      </div>
+
+      <div class="current-sound-title">
+        <div class="dot-indicator" id="soundDot"></div>
+        <span id="currentSoundName">Brown Noise</span>
+      </div>
+      <div class="sound-status" id="soundStatus">Tap circle to start masking</div>
+
+      <div class="speaker-pill" id="speakerToggle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        <span id="speakerPillText">Phone Speaker Boost Active</span>
+      </div>
+    </div>
+
+    <!-- Tuning Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>Acoustic Tuning</span>
+        <span id="volLabel" style="color:#94a3b8; font-size:12px;">75% Vol</span>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-labels">
+          <span>Mute</span>
+          <span>Volume</span>
+          <span>Max</span>
+        </div>
+        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.75">
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-labels">
+          <span>Warm & Deep</span>
+          <span id="toneLabel" style="color:#38bdf8;">Balanced Tone</span>
+          <span>Bright & Crisp</span>
+        </div>
+        <input type="range" id="toneSlider" min="0" max="1" step="0.02" value="0.45">
+      </div>
+
+      <div class="toggle-row" id="boostRow">
+        <div class="toggle-info">
+          <span class="toggle-label">Mobile Speaker Clarity Boost</span>
+          <span class="toggle-desc">Cuts battery-wasting &lt;180Hz sub-bass; lifts 1.6kHz vocal masking clarity on phone &amp; laptop speakers.</span>
+        </div>
+        <div class="switch-ui" id="boostSwitch"></div>
+      </div>
+    </div>
+
+    <!-- Timer Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>Sleep & Focus Timer</span>
+        <span id="timerCountdown" style="color:#34d399; font-size:12px; font-weight:600;"></span>
+      </div>
+      <div class="timer-chips">
+        <div class="chip active" data-min="0">Off</div>
+        <div class="chip" data-min="15">15m</div>
+        <div class="chip" data-min="30">30m</div>
+        <div class="chip" data-min="45">45m</div>
+        <div class="chip" data-min="60">1h</div>
+        <div class="chip" data-min="90">1.5h</div>
+      </div>
+    </div>
+
+    <!-- Sound Presets -->
+    <div style="font-size:15px; font-weight:600; margin-top:4px;">Masking Profiles (8)</div>
+    <div class="presets-grid" id="presetsContainer"></div>
+
+    <footer>
+      <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"/></svg>
+      <div>
+        <strong style="color:#ffffff;">Ultra-Low Power Web Audio:</strong> Looped static PCM buffer requires zero streaming and negligible CPU. Works in background on iPhone Safari and Android.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const PRESETS = [
+      { id: 'brown', name: 'Brown Noise', tag: 'Deep Rumble', color: '#d97706', rgb: '217, 119, 6', target: 'Blocks highway traffic, construction & deep bass through walls' },
+      { id: 'pink', name: 'Pink Noise', tag: 'Balanced 1/f', color: '#f472b6', rgb: '244, 114, 182', target: 'Masks office chatter, keyboard clicks & steady background noise' },
+      { id: 'white', name: 'White Noise', tag: 'Full Spectrum', color: '#38bdf8', rgb: '56, 189, 248', target: 'Cancels sharp sudden sounds, squeaks & barking dogs' },
+      { id: 'green', name: 'Green Noise', tag: 'Nature Mid-Band', color: '#34d399', rgb: '52, 211, 153', target: 'Ideal for study, focused reading & soothing tinnitus' },
+      { id: 'box_fan', name: 'Box Fan', tag: 'Airflow Hum', color: '#60a5fa', rgb: '96, 165, 250', target: 'Classic bedroom sleep fan drone with gentle blade flutter' },
+      { id: 'rain', name: 'Steady Rain', tag: 'Droplet Ambiance', color: '#818cf8', rgb: '129, 140, 248', target: 'Relaxing rain patter with deep atmospheric wash' },
+      { id: 'ocean', name: 'Ocean Surf', tag: 'Rhythmic Swells', color: '#2dd4bf', rgb: '45, 212, 191', target: 'Slow tidal crests that ease breathing and heart rate' },
+      { id: 'cabin', name: 'Airplane Cabin', tag: 'Pressurized Drone', color: '#a78bfa', rgb: '167, 139, 250', target: 'Deep focus jet turbine isolation chamber for busy spaces' }
+    ];
+
+    let currentPreset = PRESETS[0];
+    let isPlaying = false;
+    let isSpeakerBoost = true;
+    let volume = 0.75;
+    let toneWarmth = 0.45;
+    let timerMinutes = 0;
+    let timerSecondsRemaining = 0;
+    let timerInterval = null;
+
+    // Web Audio Graph
+    let audioCtx = null;
+    let bufferSource = null;
+    let gainNode = null;
+    let toneFilter = null;
+    let highPassFilter = null;
+    let peakingFilter = null;
+    const bufferCache = {};
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function createNoiseBuffer(preset) {
+      if (bufferCache[preset.id]) return bufferCache[preset.id];
+
+      const sampleRate = audioCtx.sampleRate || 44100;
+      const duration = 3.5;
+      const totalSamples = Math.floor(sampleRate * duration);
+      const buffer = audioCtx.createBuffer(1, totalSamples, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Pinking state
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      let brown = 0;
+
+      for (let i = 0; i < totalSamples; i++) {
+        const white = Math.random() * 2 - 1;
+        const t = i / sampleRate;
+
+        if (preset.id === 'white') {
+          data[i] = white * 0.4;
+        } else if (preset.id === 'pink') {
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+          b6 = white * 0.115926;
+          data[i] = pink * 0.05;
+        } else if (preset.id === 'brown') {
+          brown = (brown + (0.045 * white)) / 1.035;
+          data[i] = brown * 1.6;
+        } else if (preset.id === 'green') {
+          // Mid band
+          b0 = 0.99 * b0 + white * 0.07;
+          data[i] = b0 * 0.35;
+        } else if (preset.id === 'box_fan') {
+          brown = (brown + (0.04 * white)) / 1.035;
+          const flutter = 1.0 + 0.15 * Math.sin(2 * Math.PI * 12 * t);
+          const hum = 0.06 * Math.sin(2 * Math.PI * 118 * t);
+          data[i] = (brown * 1.4 * flutter) + hum;
+        } else if (preset.id === 'rain') {
+          b0 = 0.998 * b0 + white * 0.05;
+          let droplet = 0;
+          if (Math.random() < 0.007) droplet = (Math.random() * 2 - 1) * 0.4;
+          data[i] = (b0 * 0.3) + droplet;
+        } else if (preset.id === 'ocean') {
+          b0 = 0.995 * b0 + white * 0.06;
+          const swell = Math.pow((1.0 - Math.cos(2 * Math.PI * (t / duration))) * 0.5, 1.5);
+          data[i] = b0 * (0.15 + 0.35 * swell);
+        } else if (preset.id === 'cabin') {
+          brown = (brown + (0.05 * white)) / 1.04;
+          const jet = 0.05 * Math.sin(2 * Math.PI * 92 * t) + 0.02 * Math.sin(2 * Math.PI * 184 * t);
+          data[i] = (brown * 1.1) + jet;
+        }
+      }
+
+      // Smooth loop crossfade (last 2000 samples)
+      const crossfade = 2000;
+      for (let i = 0; i < crossfade; i++) {
+        const ratio = i / crossfade;
+        const tailIdx = totalSamples - crossfade + i;
+        data[tailIdx] = data[tailIdx] * (1 - ratio) + data[i] * ratio;
+      }
+
+      bufferCache[preset.id] = buffer;
+      return buffer;
+    }
+
+    function setupAudioGraph() {
+      if (bufferSource) {
+        try { bufferSource.stop(); } catch(e) {}
+      }
+
+      const buffer = createNoiseBuffer(currentPreset);
+      bufferSource = audioCtx.createBufferSource();
+      bufferSource.buffer = buffer;
+      bufferSource.loop = true;
+
+      // Filter 1: Tone warmth low-pass
+      toneFilter = audioCtx.createBiquadFilter();
+      toneFilter.type = 'lowpass';
+      updateToneFilter();
+
+      // Filter 2: Highpass for mobile speakers
+      highPassFilter = audioCtx.createBiquadFilter();
+      highPassFilter.type = 'highpass';
+      highPassFilter.frequency.value = isSpeakerBoost ? 180 : 20;
+
+      // Filter 3: Peaking EQ for presence boost
+      peakingFilter = audioCtx.createBiquadFilter();
+      peakingFilter.type = 'peaking';
+      peakingFilter.frequency.value = 1600;
+      peakingFilter.Q.value = 1.0;
+      peakingFilter.gain.value = isSpeakerBoost ? 3.5 : 0;
+
+      // Gain
+      gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+      bufferSource.connect(toneFilter);
+      toneFilter.connect(highPassFilter);
+      highPassFilter.connect(peakingFilter);
+      peakingFilter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      bufferSource.start(0);
+    }
+
+    function updateToneFilter() {
+      if (!toneFilter || !audioCtx) return;
+      const cutoff = 700 + 15000 * Math.pow(toneWarmth, 1.8);
+      toneFilter.frequency.setTargetAtTime(cutoff, audioCtx.currentTime, 0.05);
+    }
+
+    function updateSpeakerFilters() {
+      if (!highPassFilter || !peakingFilter || !audioCtx) return;
+      highPassFilter.frequency.setTargetAtTime(isSpeakerBoost ? 180 : 20, audioCtx.currentTime, 0.05);
+      peakingFilter.gain.setTargetAtTime(isSpeakerBoost ? 3.5 : 0, audioCtx.currentTime, 0.05);
+    }
+
+    function togglePlay() {
+      initAudio();
+      isPlaying = !isPlaying;
+
+      if (isPlaying) {
+        setupAudioGraph();
+      } else {
+        if (bufferSource) {
+          try { bufferSource.stop(); } catch(e) {}
+          bufferSource = null;
+        }
+      }
+      updateUI();
+    }
+
+    function setPreset(preset) {
+      currentPreset = preset;
+      if (isPlaying) {
+        setupAudioGraph();
+      }
+      updateUI();
+    }
+
+    function updateUI() {
+      const visualizer = document.getElementById('visualizer');
+      const playBtn = document.getElementById('playBtn');
+      const playIcon = document.getElementById('playIcon');
+      const pauseIcon = document.getElementById('pauseIcon');
+      const currentSoundName = document.getElementById('currentSoundName');
+      const soundDot = document.getElementById('soundDot');
+      const soundStatus = document.getElementById('soundStatus');
+      const speakerPillText = document.getElementById('speakerPillText');
+      const ring1 = document.getElementById('ring1');
+      const ring2 = document.getElementById('ring2');
+
+      currentSoundName.textContent = currentPreset.name;
+      soundDot.style.background = currentPreset.color;
+      soundDot.style.boxShadow = `0 0 10px ${currentPreset.color}`;
+      ring1.style.borderColor = currentPreset.color;
+      ring2.style.borderColor = currentPreset.color;
+
+      if (isPlaying) {
+        visualizer.classList.add('active');
+        playBtn.style.background = currentPreset.color;
+        playBtn.style.color = '#090d16';
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+        soundStatus.textContent = `Active Masking • ${currentPreset.tag}`;
+        soundStatus.style.color = currentPreset.color;
+      } else {
+        visualizer.classList.remove('active');
+        playBtn.style.background = '#1e293b';
+        playBtn.style.color = '#ffffff';
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+        soundStatus.textContent = 'Tap circle to start masking';
+        soundStatus.style.color = '#64748b';
+      }
+
+      speakerPillText.textContent = isSpeakerBoost ? 'Phone Speaker Boost Active' : 'Headphones Full Range Active';
+
+      const boostRow = document.getElementById('boostRow');
+      if (isSpeakerBoost) {
+        boostRow.classList.remove('switch-off');
+      } else {
+        boostRow.classList.add('switch-off');
+      }
+
+      // Update preset cards
+      document.querySelectorAll('.preset-item').forEach(card => {
+        const id = card.getAttribute('data-id');
+        if (id === currentPreset.id) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+    }
+
+    // Render presets
+    const container = document.getElementById('presetsContainer');
+    PRESETS.forEach(p => {
+      const card = document.createElement('div');
+      card.className = `preset-item ${p.id === currentPreset.id ? 'selected' : ''}`;
+      card.setAttribute('data-id', p.id);
+      card.style.setProperty('--accent', p.color);
+      card.style.setProperty('--accent-rgb', p.rgb);
+      card.innerHTML = `
+        <div class="preset-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <div class="preset-content">
+          <div class="preset-name-row">
+            <span class="preset-name">${p.name}</span>
+            <span class="preset-tag">${p.tag}</span>
+          </div>
+          <span class="preset-target">${p.target}</span>
+        </div>
+      `;
+      card.addEventListener('click', () => setPreset(p));
+      container.appendChild(card);
+    });
+
+    // Listeners
+    document.getElementById('playBtn').addEventListener('click', togglePlay);
+
+    document.getElementById('volSlider').addEventListener('input', e => {
+      volume = parseFloat(e.target.value);
+      document.getElementById('volLabel').textContent = `${Math.round(volume * 100)}% Vol`;
+      if (gainNode && audioCtx) {
+        gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.03);
+      }
+    });
+
+    document.getElementById('toneSlider').addEventListener('input', e => {
+      toneWarmth = parseFloat(e.target.value);
+      const label = toneWarmth < 0.35 ? 'Deep & Warm' : (toneWarmth > 0.65 ? 'Bright & Crisp' : 'Balanced Tone');
+      document.getElementById('toneLabel').textContent = label;
+      updateToneFilter();
+    });
+
+    function toggleSpeakerBoost() {
+      isSpeakerBoost = !isSpeakerBoost;
+      updateSpeakerFilters();
+      updateUI();
+    }
+
+    document.getElementById('speakerToggle').addEventListener('click', toggleSpeakerBoost);
+    document.getElementById('boostRow').addEventListener('click', toggleSpeakerBoost);
+
+    // Sleep Timer
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const min = parseInt(chip.getAttribute('data-min'), 10);
+        startTimer(min);
+      });
+    });
+
+    function startTimer(min) {
+      if (timerInterval) clearInterval(timerInterval);
+      timerMinutes = min;
+      if (min <= 0) {
+        timerSecondsRemaining = 0;
+        document.getElementById('timerCountdown').textContent = '';
+        return;
+      }
+      timerSecondsRemaining = min * 60;
+      updateTimerBadge();
+
+      timerInterval = setInterval(() => {
+        if (!isPlaying) return;
+        timerSecondsRemaining--;
+        updateTimerBadge();
+
+        if (timerSecondsRemaining <= 15 && timerSecondsRemaining > 0) {
+          // Fade out volume
+          if (gainNode && audioCtx) {
+            gainNode.gain.setValueAtTime(volume * (timerSecondsRemaining / 15), audioCtx.currentTime);
+          }
+        }
+
+        if (timerSecondsRemaining <= 0) {
+          clearInterval(timerInterval);
+          togglePlay();
+          document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          document.querySelector('.chip[data-min="0"]').classList.add('active');
+          document.getElementById('timerCountdown').textContent = '';
+          if (gainNode && audioCtx) gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+        }
+      }, 1000);
+    }
+
+    function updateTimerBadge() {
+      const m = Math.floor(timerSecondsRemaining / 60);
+      const s = timerSecondsRemaining % 60;
+      document.getElementById('timerCountdown').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} left`;
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
